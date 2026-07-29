@@ -26,7 +26,7 @@ body{
   -webkit-font-smoothing:antialiased;height:100dvh;overflow:hidden;
   user-select:none;-webkit-user-select:none;
 }
-#app{height:100dvh;display:flex;flex-direction:column}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
 
 .tab-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .tab-content::-webkit-scrollbar{display:none}
@@ -34,6 +34,7 @@ body{
   display:flex;background:var(--surface);border-top:1px solid var(--border);
   padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,12px));
   flex-shrink:0;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  position:relative;z-index:10;
 }
 .tab-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
