@@ -34,9 +34,7 @@ body{
   overflow-y:auto;-webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   padding-bottom:80px;
-  visibility:hidden;pointer-events:none;z-index:1;
 }
-.tab-content.active{visibility:visible;pointer-events:auto;z-index:10}
 .tab-content::-webkit-scrollbar{display:none}
 .tab-bar{
   position:fixed;bottom:0;left:0;right:0;z-index:100;
@@ -300,10 +298,10 @@ body{
 <body>
 <div id="app">
   <div class="toast" id="toast"></div>
-  <div class="tab-content active" id="tab-scan"></div>
-  <div class="tab-content" id="tab-album"></div>
-  <div class="tab-content" id="tab-stats"></div>
-  <div class="tab-content" id="tab-dist"></div>
+  <div class="tab-content" id="tab-scan"></div>
+  <div class="tab-content" id="tab-album" style="display:none"></div>
+  <div class="tab-content" id="tab-stats" style="display:none"></div>
+  <div class="tab-content" id="tab-dist" style="display:none"></div>
   <div class="detail-sheet" id="detail-sheet"></div>
   <nav class="tab-bar">
     <button class="tab-btn active" data-tab="scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a3 3 0 010 6M6 8v6M12 7v10"/><rect x="2" y="4" width="20" height="16" rx="3"/></svg>扫描</button>
@@ -347,10 +345,10 @@ let fileInput;
 $$('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 async function switchTab(t){
   currentTab=t;$$('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  $('#tab-scan').classList.toggle('active',t==='scan');
-  $('#tab-album').classList.toggle('active',t==='album');
-  $('#tab-stats').classList.toggle('active',t==='stats');
-  $('#tab-dist').classList.toggle('active',t==='dist');
+  $('#tab-scan').style.display=t==='scan'?'':'none';
+  $('#tab-album').style.display=t==='album'?'':'none';
+  $('#tab-stats').style.display=t==='stats'?'':'none';
+  $('#tab-dist').style.display=t==='dist'?'':'none';
   if(t==='scan')renderScan();
   else if(t==='album'){await loadAll();renderAlbum();}
   else if(t==='stats'){await loadAll();renderStats();}
