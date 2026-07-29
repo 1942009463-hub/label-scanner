@@ -35,7 +35,7 @@ body{
 }
 .tab-content::-webkit-scrollbar{display:none}
 .tab-bar{
-  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  position:fixed;bottom:0;left:0;right:0;z-index:101;
   display:flex;background:var(--surface);border-top:1px solid var(--border);
   padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,12px));
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -342,7 +342,8 @@ let fileInput;
 // ==================== TAB NAV ====================
 $$('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 async function switchTab(t){
-  currentTab=t;$$('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  currentTab=t;$('#detail-sheet').classList.remove('open');
+  $$('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   $('#tab-scan').style.display=t==='scan'?'':'none';
   $('#tab-album').style.display=t==='album'?'':'none';
   $('#tab-stats').style.display=t==='stats'?'':'none';
