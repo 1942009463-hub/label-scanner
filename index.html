@@ -253,6 +253,39 @@ body{
 .modal-btns button{flex:1;padding:12px;border-radius:var(--r2);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);border:none}
 .modal-cancel{background:var(--card);color:var(--text2)}
 .modal-confirm{background:var(--accent);color:#fff}
+
+/* Distribution */
+.dist-wrap{padding:12px 16px 40px}
+.dist-folder-tabs{display:flex;gap:8px;padding:4px 0 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.dist-folder-tabs::-webkit-scrollbar{display:none}
+.dist-range-tabs{display:flex;gap:6px;padding:0 0 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:wrap}
+.dist-range-tabs::-webkit-scrollbar{display:none}
+.dist-range-pill{
+  padding:6px 12px;border-radius:14px;border:1px solid var(--border2);
+  background:var(--card);color:var(--text2);font-size:11px;font-weight:500;
+  cursor:pointer;white-space:nowrap;font-family:var(--font);flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;transition:all .15s;
+}
+.dist-range-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.dist-grid{
+  display:grid;grid-template-columns:repeat(10,1fr);gap:3px;
+  background:var(--card);border-radius:var(--radius);padding:14px;
+  border:1px solid var(--border);
+}
+.dist-cell{
+  aspect-ratio:1;border-radius:4px;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:600;
+  font-family:'SF Mono','Menlo',monospace;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:all .12s;
+  min-width:0;overflow:hidden;position:relative;
+}
+.dist-cell.filled{background:var(--accent);color:#fff;box-shadow:0 1px 4px var(--accent-glow)}
+.dist-cell.empty{background:var(--surface);color:var(--text3);border:1px solid var(--border)}
+.dist-cell:active{transform:scale(.9)}
+.dist-legend{display:flex;gap:16px;align-items:center;padding:12px 4px;font-size:11px;color:var(--text3)}
+.dist-legend span{display:flex;align-items:center;gap:4px}
+.dist-legend .swatch{width:12px;height:12px;border-radius:3px}
+.dist-info{padding:8px 4px;font-size:12px;color:var(--text2)}
 </style>
 </head>
 <body>
@@ -261,11 +294,13 @@ body{
   <div class="tab-content" id="tab-scan"></div>
   <div class="tab-content" id="tab-album" style="display:none"></div>
   <div class="tab-content" id="tab-stats" style="display:none"></div>
+  <div class="tab-content" id="tab-dist" style="display:none"></div>
   <div class="detail-sheet" id="detail-sheet"></div>
   <nav class="tab-bar">
     <button class="tab-btn active" data-tab="scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a3 3 0 010 6M6 8v6M12 7v10"/><rect x="2" y="4" width="20" height="16" rx="3"/></svg>扫描</button>
     <button class="tab-btn" data-tab="album"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1.5" y="3.5" width="21" height="17" rx="2.5"/><line x1="1.5" y1="9.5" x2="22.5" y2="9.5"/></svg>号册</button>
     <button class="tab-btn" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="13.5" width="4.5" height="8" rx="1.2"/><rect x="9.5" y="8.5" width="4.5" height="13" rx="1.2"/><rect x="16.5" y="3.5" width="4.5" height="18" rx="1.2"/></svg>统计</button>
+    <button class="tab-btn" data-tab="dist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>分布</button>
   </nav>
 </div>
 
@@ -305,9 +340,11 @@ async function switchTab(t){
   $('#tab-scan').style.display=t==='scan'?'':'none';
   $('#tab-album').style.display=t==='album'?'':'none';
   $('#tab-stats').style.display=t==='stats'?'':'none';
+  $('#tab-dist').style.display=t==='dist'?'':'none';
   if(t==='scan')renderScan();
   else if(t==='album'){await loadAll();renderAlbum();}
   else if(t==='stats'){await loadAll();renderStats();}
+  else if(t==='dist'){await loadAll();renderDist();}
 }
 async function loadAll(){
   allTags=await getTags();
@@ -525,6 +562,60 @@ function renderStats(){
   const grp={};for(const t of allTags){const r=rangeOf(t.serialNumber);grp[r]=(grp[r]||0)+1}
   const dc=H('div','','');dc.className='section-card';dc.innerHTML='<h3><span class="dot"></span>号册分布</h3>';
   Object.keys(grp).sort().forEach(r=>{dc.innerHTML+='<div class="dist-row"><span class="d-name">📁 '+r+'</span><span class="d-val">'+grp[r]+' 条</span></div>'});el.appendChild(dc);
+}
+
+// ==================== DISTRIBUTION ====================
+let distBrand='全部',distRange=0;
+
+function renderDist(){
+  const el=$('#tab-dist');el.innerHTML='';el.style.display='';
+  if(!allTags.length){el.innerHTML='<div class="empty-state"><div class="empty-hero">📊</div><h1>暂无数据</h1><p class="sub">上传后将展示序号分布</p></div>';return}
+  el.className='dist-wrap';
+
+  // Brand tabs
+  const bt=H('div','','');bt.className='dist-folder-tabs';
+  const allB=H('button','','');allB.className='folder-pill'+(distBrand==='全部'?' active':'');allB.textContent='全部 '+allTags.length;allB.addEventListener('click',()=>{distBrand='全部';distRange=0;renderDist()});bt.appendChild(allB);
+  for(const f of allFolders){const cnt=allTags.filter(t=>(t.folder||'未分类')===f.name).length;const p=H('button','','');p.className='folder-pill'+(distBrand===f.name?' active':'');p.textContent=f.name+' '+cnt;p.addEventListener('click',()=>{distBrand=f.name;distRange=0;renderDist()});bt.appendChild(p)}
+  el.appendChild(bt);
+
+  // Filter by brand
+  const filtered=distBrand==='全部'?allTags:allTags.filter(t=>(t.folder||'未分类')===distBrand);
+  const serialSet=new Set(filtered.map(t=>t.serialNumber));
+
+  // Range tabs: 000-099, 100-199, ... 900-999
+  const rt=H('div','','');rt.className='dist-range-tabs';
+  for(let r=0;r<10;r++){
+    const lo=r*100,hi=lo+99;
+    const inRange=filtered.filter(t=>t.serialNumber>=lo&&t.serialNumber<=hi).length;
+    const p=H('button','','');p.className='dist-range-pill'+(distRange===r?' active':'');
+    p.textContent=String(lo).padStart(3,'0')+'-'+String(hi).padStart(3,'0')+' ('+inRange+')';
+    p.addEventListener('click',()=>{distRange=r;renderDist()});rt.appendChild(p);
+  }
+  el.appendChild(rt);
+
+  // Grid
+  const lo2=distRange*100,hi2=lo2+99;
+  const inRange2=filtered.filter(t=>t.serialNumber>=lo2&&t.serialNumber<=hi2).length;
+  const info=H('div','','');info.className='dist-info';info.textContent=inRange2+' / 100 已收集';el.appendChild(info);
+
+  const grid=H('div','','');grid.className='dist-grid';
+  for(let n=lo2;n<=hi2;n++){
+    const cell=H('div','','');cell.className='dist-cell '+(serialSet.has(n)?'filled':'empty');
+    cell.textContent=String(n).padStart(3,'0');
+    if(serialSet.has(n)){
+      cell.addEventListener('click',()=>{
+        const tag=filtered.find(t=>t.serialNumber===n);
+        if(tag)showDetail(tag);
+      });
+    }
+    grid.appendChild(cell);
+  }
+  el.appendChild(grid);
+
+  // Legend
+  const lg=H('div','','');lg.className='dist-legend';
+  lg.innerHTML='<span><span class="swatch" style="background:var(--accent)"></span>已收集</span><span><span class="swatch" style="background:var(--surface);border:1px solid var(--border)"></span>未收集</span>';
+  el.appendChild(lg);
 }
 
 // ==================== INIT ====================
