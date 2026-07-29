@@ -487,8 +487,7 @@ function renderAlbum(){
 
   const ft=H('div','','');ft.className='folder-tabs';
   const allP=H('button','','');allP.className='folder-pill'+(activeFolder==='全部'?' active':'');allP.textContent='全部 '+allTags.length;allP.addEventListener('click',()=>{activeFolder='全部';renderAlbum()});ft.appendChild(allP);
-  for(const f of allFolders){const cnt=allTags.filter(t=>(t.folder||"未分类")===f.name).length;const p=H("button","","");p.className="folder-pill"+(activeFolder===f.name?" active":"");p.textContent=f.name+" "+cnt;p.addEventListener("click",()=>{activeFolder=f.name;renderAlbum()});let ht;p.addEventListener("touchstart",e=>{ht=setTimeout(async()=>{if(confirm("删除品牌「"+f.name+"」？
-该品牌下的记录将变为未分类")){await removeFolder(f.name);await loadAll();renderAlbum()}},800)});p.addEventListener("touchend",()=>clearTimeout(ht));p.addEventListener("touchmove",()=>clearTimeout(ht));ft.appendChild(p)}
+  for(const f of allFolders){const cnt=allTags.filter(t=>(t.folder||"未分类")===f.name).length;const p=H("button","","");p.className="folder-pill"+(activeFolder===f.name?" active":"");p.textContent=f.name+" "+cnt;p.addEventListener("click",()=>{activeFolder=f.name;renderAlbum()});let ht;p.addEventListener("touchstart",e=>{ht=setTimeout(async()=>{if(confirm("删除品牌「"+f.name+"」？该品牌下的记录将变为未分类")){await removeFolder(f.name);await loadAll();renderAlbum()}},800)});p.addEventListener("touchend",()=>clearTimeout(ht));p.addEventListener("touchmove",()=>clearTimeout(ht));ft.appendChild(p)}
   const addB=H('button','','');addB.className='folder-add';addB.textContent='+';addB.addEventListener('click',showFolderModal);ft.appendChild(addB);el.appendChild(ft);
 
   const sb=H('div','','');sb.className='search-bar';sb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>';
