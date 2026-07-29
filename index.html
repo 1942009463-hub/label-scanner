@@ -463,6 +463,12 @@ function renderResultForm(el){
   const pnInput=H('input','','');pnInput.type='text';pnInput.placeholder='输入商品名，如 全冰奶酪美式';
   pnRow.appendChild(pnInput);card.appendChild(pnRow);
 
+  // Price
+  const prRow=H('div','','');prRow.className='field-row';
+  prRow.innerHTML='<svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span class="f-label">价格</span>';
+  const prInput=H('input','','');prInput.type='number';prInput.step='0.01';prInput.placeholder='如 9.9';
+  prRow.appendChild(prInput);card.appendChild(prRow);
+
   const fRow=H('div','','');fRow.className='field-row';
   fRow.innerHTML='<svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg><span class="f-label">品牌</span>';
   const fSel=H('select','','');for(const f of allFolders)fSel.innerHTML+='<option value="'+f.name+'">'+f.name+'</option>';
@@ -472,11 +478,12 @@ function renderResultForm(el){
   saveBtn.addEventListener('click',async()=>{
     const sn=parseInt(snInput.value)||0;
     const pn=pnInput.value.trim();
+    const price=parseFloat(prInput.value)||0;
     if(!sn&&!pn){toast('请至少填写序号或商品名',true);return}
     saveBtn.disabled=true;saveBtn.textContent='保存中…';
     try{
       const storeImg=flatImage&&flatImage.length>300000?await compressForStorage(flatImage):flatImage;
-      await addTag({id:uid(),serialNumber:sn,productName:pn||'未命名',folder:fSel.value,imageData:storeImg||'',createdAt:new Date().toISOString(),notes:''});
+      await addTag({id:uid(),serialNumber:sn,productName:pn||'未命名',price:price,folder:fSel.value,imageData:storeImg||'',createdAt:new Date().toISOString(),notes:''});
       toast('保存成功');srcImage=null;flatImage=null;renderScan();
     }catch(e){toast('保存失败: '+(e.message||e),true);saveBtn.disabled=false;saveBtn.textContent='☕ 保存记录'}
   });
@@ -509,7 +516,7 @@ function renderAlbum(){
       const g=H('div','','');g.className='range-group';g.innerHTML='<div class="range-label"><span class="dot"></span>'+r+'<span class="count">'+items.length+' 条</span></div>';
       for(const t of items){
         const it=H('div','','');it.className='tag-item';
-        it.innerHTML='<span class="tag-num">'+String(t.serialNumber).padStart(3,'0')+'</span><span class="tag-name">'+(t.productName||'—')+'</span><span class="tag-folder">'+(t.folder||'未分类')+'</span>';
+        it.innerHTML='<span class="tag-num">'+String(t.serialNumber).padStart(3,'0')+'</span><span class="tag-name">'+(t.productName||'—')+'</span><span class="tag-folder">'+(t.folder||'未分类')+'</span>'+(t.price?'<span style="font-size:12px;color:var(--accent-light);font-weight:600;flex-shrink:0">¥'+(t.price).toFixed(2)+'</span>':'');
         if(t.imageData)it.innerHTML+='<img class="tag-thumb" src="'+t.imageData+'" alt="">';
         it.innerHTML+='<svg class="tag-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>';
         it.addEventListener('click',()=>showDetail(t));let sx=0;it.addEventListener('touchstart',e=>{sx=e.touches[0].clientX});it.addEventListener('touchend',async e=>{if(e.changedTouches[0].clientX-sx<-70&&confirm('删除「'+(t.productName||t.serialNumber)+'」？')){await removeTag(t.id);await loadAll();renderAlbum()}});
@@ -532,11 +539,12 @@ function showDetail(t){
   if(t.imageData)body.innerHTML+='<img class="detail-img" src="'+t.imageData+'" alt="">';
   body.innerHTML+='<div class="detail-field"><label>序号</label><input type="number" id="d-sn" value="'+t.serialNumber+'"></div>';
   body.innerHTML+='<div class="detail-field"><label>商品名</label><input type="text" id="d-pn" value="'+(t.productName||'')+'"></div>';
+  body.innerHTML+='<div class="detail-field"><label>价格</label><input type="number" id="d-price" step="0.01" value="'+(t.price||0)+'"></div>';
   body.innerHTML+='<div class="detail-field"><label>品牌</label><select id="d-folder">'+allFolders.map(f=>'<option value="'+f.name+'"'+(t.folder===f.name?' selected':'')+'>'+f.name+'</option>').join('')+'</select></div>';
   body.innerHTML+='<div class="detail-field"><label>所属号册</label><div style="font-size:16px;font-weight:600;color:var(--accent-light)">'+rangeOf(t.serialNumber)+'</div></div>';
   body.innerHTML+='<div class="detail-field"><label>备注</label><textarea id="d-note">'+(t.notes||'')+'</textarea></div>';
   body.innerHTML+='<div class="detail-field"><label>时间</label><div style="font-size:13px;color:var(--text2)">'+new Date(t.createdAt).toLocaleString('zh-CN')+'</div></div>';
-  const saveBtn=H('button','','保存修改');saveBtn.className='btn-ghost';saveBtn.addEventListener('click',async()=>{t.serialNumber=parseInt($('#d-sn').value)||0;t.productName=$('#d-pn').value.trim();t.folder=$('#d-folder').value;t.notes=$('#d-note').value;try{await updateTag(t);await loadAll();toast('已更新');s.classList.remove('open')}catch(e){toast('保存失败',true)}});body.appendChild(saveBtn);
+  const saveBtn=H('button','','保存修改');saveBtn.className='btn-ghost';saveBtn.addEventListener('click',async()=>{t.serialNumber=parseInt($('#d-sn').value)||0;t.productName=$('#d-pn').value.trim();t.price=parseFloat($('#d-price').value)||0;t.folder=$('#d-folder').value;t.notes=$('#d-note').value;try{await updateTag(t);await loadAll();toast('已更新');s.classList.remove('open')}catch(e){toast('保存失败',true)}});body.appendChild(saveBtn);
   const delBtn=H('button','','删除记录');delBtn.className='btn-danger';delBtn.addEventListener('click',async()=>{if(!confirm('确定删除？'))return;try{await removeTag(t.id);await loadAll();toast('已删除');s.classList.remove('open')}catch(e){toast('删除失败',true)}});body.appendChild(delBtn);
   s.appendChild(body);s.classList.add('open');
 }
@@ -559,7 +567,8 @@ function renderStats(){
   el.className='stats-wrap';
   const freq={};for(const t of allTags){const n=t.productName||'未命名';freq[n]=(freq[n]||0)+1}
   const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);const maxC=sorted[0][1];
-  el.innerHTML='<div class="cards-row"><div class="s-card"><div class="s-icon">☕</div><div class="s-val">'+allTags.length+'</div><div class="s-label">总记录</div></div><div class="s-card"><div class="s-icon">🏷</div><div class="s-val">'+sorted.length+'</div><div class="s-label">商品种类</div></div><div class="s-card"><div class="s-icon">🥇</div><div class="s-val" style="font-size:14px">'+(sorted[0][0].length>6?sorted[0][0].slice(0,6)+'…':sorted[0][0])+'</div><div class="s-label">冠军商品</div></div></div>';
+  const totalSpend=allTags.reduce((s,t)=>s+(t.price||0),0);
+  el.innerHTML='<div class="cards-row"><div class="s-card"><div class="s-icon">☕</div><div class="s-val">'+allTags.length+'</div><div class="s-label">总记录</div></div><div class="s-card"><div class="s-icon">💰</div><div class="s-val" style="font-size:18px">¥'+(totalSpend).toFixed(2)+'</div><div class="s-label">总消费</div></div><div class="s-card"><div class="s-icon">🏷</div><div class="s-val">'+sorted.length+'</div><div class="s-label">商品种类</div></div></div>';
   const fc=H('div','','');fc.className='section-card';fc.innerHTML='<h3><span class="dot"></span>品牌分布</h3>';
   const fd={};for(const t of allTags){const f=t.folder||'未分类';fd[f]=(fd[f]||0)+1}
   Object.entries(fd).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>{fc.innerHTML+='<div class="freq-row"><span class="freq-name">'+n+'</span><span class="freq-bar-bg"><span class="freq-bar-fill" style="width:'+(c/allTags.length*100)+'%"></span></span><span class="freq-count">'+c+' 次</span></div>'});el.appendChild(fc);
