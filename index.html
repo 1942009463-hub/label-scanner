@@ -26,11 +26,12 @@ body{
   -webkit-font-smoothing:antialiased;margin:0;padding:0;
   user-select:none;-webkit-user-select:none;
 }
-#app{height:100vh;height:100dvh;position:relative;overflow:hidden}
+#app{position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
 
 .tab-content{
   position:absolute;top:0;left:0;right:0;bottom:0;
   overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
   padding-bottom:80px;
 }
 .tab-content::-webkit-scrollbar{display:none}
